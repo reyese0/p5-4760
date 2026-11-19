@@ -224,7 +224,7 @@ static void launch_child(void) {
     launched++;
     active++;
 
-    log_both("Master launched P%d pid %d at time %u:%09u\n", index, (int)pid, myClock->seconds, myClock->nanoseconds);
+    log_both("OSS launched P%d pid %d at time %u:%09u\n", index, (int)pid, myClock->seconds, myClock->nanoseconds);
 }
 
 static int grant_request(int index, int resource, int immediate) {
@@ -242,7 +242,7 @@ static int grant_request(int index, int resource, int immediate) {
         immediateGrants++;
     }
 
-    log_both("Master granting P%d request R%d at time %u:%09u\n", index, resource, myClock->seconds, myClock->nanoseconds);
+    log_both("OSS granting P%d request R%d at time %u:%09u\n", index, resource, myClock->seconds, myClock->nanoseconds);
     
     if (grantedRequests % 20 == 0) {
         log_both("Current system resources after %d granted requests\n", grantedRequests);
@@ -289,7 +289,7 @@ static void handle_user_message(const UserMessage *msg) {
 
     if (msg->action == 0) {
         // Worker is done and oss does PCB cleanup and resource release
-        log_both("Master sees P%d terminating at time %u:%09u\n",
+        log_both("OSS sees P%d terminating at time %u:%09u\n",
                  index, myClock->seconds, myClock->nanoseconds);
         release_all_resources(index);
         waitpid(processTable[index].pid, NULL, 0);
@@ -303,14 +303,14 @@ static void handle_user_message(const UserMessage *msg) {
     if (msg->action > 0) {
         resource = msg->action - 1;
         totalRequests++;
-        log_both("Master has detected Process P%d requesting R%d at time %u:%09u\n",
+        log_both("OSS has detected Process P%d requesting R%d at time %u:%09u\n",
                  index, resource, myClock->seconds, myClock->nanoseconds);
         if (!grant_request(index, resource, 1)) {
             // No reply is sent which leaves the worker blocked in msgrcv
             processTable[index].blocked = 1;
             processTable[index].requestedResource = resource;
 
-            log_both("Master blocking P%d for R%d at time %u:%09u\n", index, resource, myClock->seconds, myClock->nanoseconds);
+            log_both("OSS blocking P%d for R%d at time %u:%09u\n", index, resource, myClock->seconds, myClock->nanoseconds);
         }
         return;
     }
@@ -322,7 +322,7 @@ static void handle_user_message(const UserMessage *msg) {
         processTable[index].allocated[resource]--;
         available[resource]++;
      
-        log_both("Master has acknowledged Process P%d releasing R%d at time %u:%09u\n", index, resource, myClock->seconds, myClock->nanoseconds);
+        log_both("OSS has acknowledged Process P%d releasing R%d at time %u:%09u\n", index, resource, myClock->seconds, myClock->nanoseconds);
     }
 }
 
@@ -358,7 +358,7 @@ static void run_deadlock_detection(void) {
     int progress = 1;
 
     deadlockRuns++;
-    log_both("Master running deadlock detection at time %u:%09u:\n", myClock->seconds, myClock->nanoseconds);
+    log_both("OSS running deadlock detection at time %u:%09u:\n", myClock->seconds, myClock->nanoseconds);
 
     for (i = 0; i < RESOURCE_CLASSES; i++) {
         work[i] = available[i];
